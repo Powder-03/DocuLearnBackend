@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Backend Gateway Service (The Auth Gateway)
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: learning_saas_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d learning_saas_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Generation Service (Your existing AI service)
+  generation_service:
+    # build: ../generation_service
+    image: your-generation-service:latest
+    expose:
+      - "8001"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # RAG Service (Your existing AI service)
+  rag_service:
+    # build: ../rag_service
+    image: your-rag-service:latest
+    expose:
+      - "8002"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
